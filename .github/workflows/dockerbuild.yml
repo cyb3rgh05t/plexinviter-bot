@@ -11,8 +11,6 @@ on:
       - ".github/**"
       - "LICENSE"
       - "**.md"
-    branches-ignore:
-      - "dependabot/**"
   workflow_dispatch:
 
 env:
