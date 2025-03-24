@@ -126,7 +126,7 @@ jobs:
         run: echo ${{ steps.docker_build.outputs.digest }}
 
       - name: Send Enhanced Discord Notification
-        if: success() && secrets.DISCORD_WEBHOOK != ''
+        if: success()
         run: |
           # Get short SHA - fix the variable capture
           SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
