@@ -1,5 +1,4 @@
 from pickle import FALSE
-import app.bot.helper.jellyfinhelper as jelly
 from app.bot.helper.textformat import bcolors
 import discord
 from discord.ext import commands
@@ -10,7 +9,6 @@ from plexapi.myplex import MyPlexAccount
 from plexapi.server import PlexServer
 import app.bot.helper.db as db
 import app.bot.helper.plexhelper as plexhelper
-import app.bot.helper.jellyfinhelper as jelly
 import texttable
 from app.bot.helper.message import *
 from app.bot.helper.confighelper import *
@@ -19,7 +17,6 @@ CONFIG_PATH = "app/config/config.ini"
 BOT_SECTION = "bot_envs"
 
 plex_configured = True
-jellyfin_configured = True
 
 config = configparser.ConfigParser()
 config.read(CONFIG_PATH)
@@ -63,53 +60,13 @@ if Plex_LIBS is None:
 else:
     Plex_LIBS = list(Plex_LIBS.split(","))
 
-# Get Jellyfin config
-try:
-    JELLYFIN_SERVER_URL = config.get(BOT_SECTION, "jellyfin_server_url")
-    JELLYFIN_API_KEY = config.get(BOT_SECTION, "jellyfin_api_key")
-except:
-    jellyfin_configured = False
-
-# Get Jellyfin roles config
-try:
-    jellyfin_roles = config.get(BOT_SECTION, "jellyfin_roles")
-except:
-    jellyfin_roles = None
-if jellyfin_roles:
-    jellyfin_roles = list(jellyfin_roles.split(","))
-else:
-    jellyfin_roles = []
-
-# Get Jellyfin libs config
-try:
-    jellyfin_libs = config.get(BOT_SECTION, "jellyfin_libs")
-except:
-    jellyfin_libs = None
-if jellyfin_libs is None:
-    jellyfin_libs = ["all"]
-else:
-    jellyfin_libs = list(jellyfin_libs.split(","))
-
 # Get Enable config
-try:
-    USE_JELLYFIN = config.get(BOT_SECTION, "jellyfin_enabled")
-    USE_JELLYFIN = USE_JELLYFIN.lower() == "true"
-except:
-    USE_JELLYFIN = False
-
 try:
     USE_PLEX = config.get(BOT_SECTION, "plex_enabled")
     USE_PLEX = USE_PLEX.lower() == "true"
 except:
+    print("Could not get Plex enable config. Defaulting to False")
     USE_PLEX = False
-
-try:
-    JELLYFIN_EXTERNAL_URL = config.get(BOT_SECTION, "jellyfin_external_url")
-    if not JELLYFIN_EXTERNAL_URL:
-        JELLYFIN_EXTERNAL_URL = JELLYFIN_SERVER_URL
-except:
-    JELLYFIN_EXTERNAL_URL = JELLYFIN_SERVER_URL
-    print("Could not get Jellyfin external url. Defaulting to server url.")
 
 if USE_PLEX and plex_configured:
     try:
@@ -141,11 +98,8 @@ class app(commands.Cog):
     plex_commands = app_commands.Group(
         name="plex", description="PlexInviter Plex commands"
     )
-    jellyfin_commands = app_commands.Group(
-        name="jellyfin", description="PlexInviter Jellyfin commands"
-    )
-    membarr_commands = app_commands.Group(
-        name="membarr", description="PlexInviter general commands"
+    bot_commands = app_commands.Group(
+        name="bot", description="PlexInviter general commands"
     )
 
     def __init__(self, bot):
@@ -181,10 +135,6 @@ class app(commands.Cog):
             print(
                 "Configure Plex roles to enable auto invite to Plex after a role is assigned."
             )
-        if jellyfin_roles is None:
-            print(
-                "Configure Jellyfin roles to enable auto invite to Jellyfin after a role is assigned."
-            )
 
     async def getemail(self, after):
         email = None
@@ -216,47 +166,6 @@ class app(commands.Cog):
                 )
                 await embederror(after, message)
                 return None
-
-    async def getusername(self, after):
-        username = None
-        await embedinfo(
-            after,
-            f"Welcome To Jellyfin! Please reply with your username to be added to the Jellyfin server!",
-        )
-        await embedinfo(
-            after,
-            f"If you do not respond within 24 hours, the request will be cancelled, and the server admin will need to add you manually.",
-        )
-        while username is None:
-
-            def check(m):
-                return m.author == after and not m.guild
-
-            try:
-                username = await self.bot.wait_for(
-                    "message", timeout=86400, check=check
-                )
-                if jelly.verify_username(
-                    JELLYFIN_SERVER_URL, JELLYFIN_API_KEY, str(username.content)
-                ):
-                    return str(username.content)
-                else:
-                    username = None
-                    message = "This username is already choosen. Please select another username."
-                    await embederror(after, message)
-                    continue
-            except asyncio.TimeoutError:
-                message = "Timed out. Please contact the server admin directly."
-                print("Jellyfin user prompt timed out")
-                await embederror(after, message)
-                return None
-            except Exception as e:
-                await embederror(
-                    after,
-                    "Something went wrong. Please try again with another username.",
-                )
-                print(e)
-                username = None
 
     async def addtoplex(self, email, response):
         if plexhelper.verifyemail(email):
@@ -298,52 +207,14 @@ class app(commands.Cog):
             await embederror(response, "<:rejected:995614671128244224> Invalid email.")
             return False
 
-    async def addtojellyfin(self, username, password, response):
-        if not jelly.verify_username(JELLYFIN_SERVER_URL, JELLYFIN_API_KEY, username):
-            await embederror(
-                response, f"An account with username {username} already exists."
-            )
-            return False
-
-        if jelly.add_user(
-            JELLYFIN_SERVER_URL, JELLYFIN_API_KEY, username, password, jellyfin_libs
-        ):
-            return True
-        else:
-            await embederror(
-                response,
-                "There was an error adding this user to Jellyfin. Check logs for more info.",
-            )
-            return False
-
-    async def removefromjellyfin(self, username, response):
-        if jelly.verify_username(JELLYFIN_SERVER_URL, JELLYFIN_API_KEY, username):
-            await embederror(
-                response, f"Could not find account with username {username}."
-            )
-            return
-
-        if jelly.remove_user(JELLYFIN_SERVER_URL, JELLYFIN_API_KEY, username):
-            await embedinfo(
-                response, f"Successfully removed user {username} from Jellyfin."
-            )
-            return True
-        else:
-            await embederror(
-                response,
-                f"There was an error removing this user from Jellyfin. Check logs for more info.",
-            )
-            return False
-
     @commands.Cog.listener()
     async def on_member_update(self, before, after):
-        if plex_roles is None and jellyfin_roles is None:
+        if plex_roles is None:
             return
         roles_in_guild = after.guild.roles
         role = None
 
         plex_processed = False
-        jellyfin_processed = False
 
         # Check Plex roles
         if plex_configured and USE_PLEX:
@@ -414,96 +285,11 @@ class app(commands.Cog):
                 if plex_processed:
                     break
 
-        role = None
-        # Check Jellyfin roles
-        if jellyfin_configured and USE_JELLYFIN:
-            for role_for_app in jellyfin_roles:
-                for role_in_guild in roles_in_guild:
-                    if role_in_guild.name == role_for_app:
-                        role = role_in_guild
-
-                    # Jellyfin role was added
-                    if role is not None and (
-                        role in after.roles and role not in before.roles
-                    ):
-                        print("Jellyfin role added")
-                        username = await self.getusername(after)
-                        print("Username retrieved from user")
-                        if username is not None:
-                            await embedinfo(
-                                after,
-                                "Got it we will be creating your Jellyfin account shortly!",
-                            )
-                            password = jelly.generate_password(16)
-                            if jelly.add_user(
-                                JELLYFIN_SERVER_URL,
-                                JELLYFIN_API_KEY,
-                                username,
-                                password,
-                                jellyfin_libs,
-                            ):
-                                db.save_user_jellyfin(str(after.id), username)
-                                await asyncio.sleep(5)
-                                await embedcustom(
-                                    after,
-                                    "You have been added to Jellyfin!",
-                                    {
-                                        "Username": username,
-                                        "Password": f"||{password}||",
-                                    },
-                                )
-                                await embedinfo(
-                                    after, f"Go to {JELLYFIN_EXTERNAL_URL} to log in!"
-                                )
-                            else:
-                                await embedinfo(
-                                    after,
-                                    "There was an error adding this user to Jellyfin. Message Server Admin.",
-                                )
-                        jellyfin_processed = True
-                        break
-
-                    # Jellyfin role was removed
-                    elif role is not None and (
-                        role not in after.roles and role in before.roles
-                    ):
-                        print("Jellyfin role removed")
-                        try:
-                            user_id = after.id
-                            username = db.get_jellyfin_username(user_id)
-                            jelly.remove_user(
-                                JELLYFIN_SERVER_URL, JELLYFIN_API_KEY, username
-                            )
-                            deleted = db.remove_jellyfin(user_id)
-                            if deleted:
-                                print("Removed Jellyfin from {}".format(after.name))
-                                # await secure.send(plexname + ' ' + after.mention + ' was removed from plex')
-                            else:
-                                print("Cannot remove Jellyfin from this user")
-                            await embedinfo(
-                                after, "You have been removed from Jellyfin"
-                            )
-                        except Exception as e:
-                            print(e)
-                            print(
-                                "{} Cannot remove this user from Jellyfin.".format(
-                                    username
-                                )
-                            )
-                        jellyfin_processed = True
-                        break
-                if jellyfin_processed:
-                    break
-
     @commands.Cog.listener()
     async def on_member_remove(self, member):
         if USE_PLEX and plex_configured:
             email = db.get_useremail(member.id)
             plexhelper.plexremove(plex, email)
-
-        if USE_JELLYFIN and jellyfin_configured:
-            jellyfin_username = db.get_jellyfin_username(member.id)
-            jelly.remove_user(JELLYFIN_SERVER_URL, JELLYFIN_API_KEY, jellyfin_username)
 
         deleted = db.delete_user(member.id)
         if deleted:
@@ -524,23 +310,7 @@ class app(commands.Cog):
         await self.removefromplex(email, interaction.response)
 
     @app_commands.checks.has_permissions(administrator=True)
-    @jellyfin_commands.command(name="invite", description="Invite a user to Jellyfin")
-    async def jellyfininvite(self, interaction: discord.Interaction, username: str):
-        password = jelly.generate_password(16)
-        if await self.addtojellyfin(username, password, interaction.response):
-            await embedcustom(
-                interaction.response,
-                "Jellyfin user created!",
-                {"Username": username, "Password": f"||{password}||"},
-            )
-
-    @app_commands.checks.has_permissions(administrator=True)
-    @jellyfin_commands.command(name="remove", description="Remove a user from Jellyfin")
-    async def jellyfinremove(self, interaction: discord.Interaction, username: str):
-        await self.removefromjellyfin(username, interaction.response)
-
-    @app_commands.checks.has_permissions(administrator=True)
-    @membarr_commands.command(
+    @bot_commands.command(
         name="dbadd", description="Add a user to the PlexInviter database"
     )
     async def dbadd(
@@ -548,10 +318,8 @@ class app(commands.Cog):
         interaction: discord.Interaction,
         member: discord.Member,
         email: str = "",
-        jellyfin_username: str = "",
     ):
         email = email.strip()
-        jellyfin_username = jellyfin_username.strip()
 
         # Check email if provided
         if email and not plexhelper.verifyemail(email):
@@ -561,10 +329,10 @@ class app(commands.Cog):
             return
 
         try:
-            db.save_user_all(str(member.id), email, jellyfin_username)
+            db.save_user_email(str(member.id), email)
             await embedinfo(
                 interaction.response,
-                "<:approved:995615632961847406> Email and User were added to the Database.",
+                "<:approved:995615632961847406> Email was added to the Database.",
             )
         except Exception as e:
             await embederror(
@@ -574,32 +342,31 @@ class app(commands.Cog):
             print(e)
 
     @app_commands.checks.has_permissions(administrator=True)
-    @membarr_commands.command(name="dbls", description="View PlexInviter database")
+    @bot_commands.command(name="dbls", description="View PlexInviter database")
     async def dbls(self, interaction: discord.Interaction):
 
         embed = discord.Embed(title="PlexInviter Database.")
         all = db.read_all()
         table = texttable.Texttable()
-        table.set_cols_dtype(["t", "t", "t", "t"])
-        table.set_cols_align(["c", "c", "c", "c"])
-        header = ("#", "DISCORD", "PLEX", "JELLYFIN")
+        table.set_cols_dtype(["t", "t", "t"])
+        table.set_cols_align(["c", "c", "c"])
+        header = ("#", "DISCORD", "PLEX")
         table.add_row(header)
         for index, peoples in enumerate(all):
             index = index + 1
             id = int(peoples[1])
             dbuser = self.bot.get_user(id)
             dbemail = peoples[2] if peoples[2] else "No Plex"
-            dbjellyfin = peoples[3] if peoples[3] else "No Jellyfin"
             try:
                 username = dbuser.name
             except:
                 username = "User Not Found."
             embed.add_field(
                 name=f"**{index}. {username}**",
-                value=dbemail + "\n" + dbjellyfin + "\n",
+                value=dbemail,
                 inline=False,
             )
-            table.add_row((index, username, dbemail, dbjellyfin))
+            table.add_row((index, username, dbemail))
 
         total = str(len(all))
         if len(all) > 25:
@@ -615,7 +382,7 @@ class app(commands.Cog):
             await interaction.response.send_message(embed=embed, ephemeral=True)
 
     @app_commands.checks.has_permissions(administrator=True)
-    @membarr_commands.command(
+    @bot_commands.command(
         name="dbrm", description="Remove user from PlexInviter database"
     )
     async def dbrm(self, interaction: discord.Interaction, position: int):
@@ -626,14 +393,13 @@ class app(commands.Cog):
             id = int(peoples[1])
             dbuser = self.bot.get_user(id)
             dbemail = peoples[2] if peoples[2] else "No Plex"
-            dbjellyfin = peoples[3] if peoples[3] else "No Jellyfin"
             try:
                 username = dbuser.name
             except:
                 username = "User Not Found."
             embed.add_field(
                 name=f"**{index}. {username}**",
-                value=dbemail + "\n" + dbjellyfin + "\n",
+                value=dbemail,
                 inline=False,
             )
 

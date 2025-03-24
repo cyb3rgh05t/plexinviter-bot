@@ -23,13 +23,7 @@ CONFIG_KEYS = [
     "owner_id",
     "channel_id",
     "auto_remove_user",
-    "jellyfin_api_key",
-    "jellyfin_server_url",
-    "jellyfin_roles",
-    "jellyfin_libs",
     "plex_enabled",
-    "jellyfin_enabled",
-    "jellyfin_external_url",
 ]
 
 # settings
@@ -41,12 +35,7 @@ PLEX_SERVER_NAME = ""
 PLEX_TOKEN = ""
 PLEX_BASE_URL = ""
 Plex_LIBS = None
-JELLYFIN_SERVER_URL = ""
-JELLYFIN_API_KEY = ""
-jellyfin_libs = ""
-jellyfin_roles = None
 plex_configured = True
-jellyfin_configured = True
 
 switch = 0
 
@@ -117,52 +106,7 @@ if Plex_LIBS is None:
 else:
     Plex_LIBS = list(Plex_LIBS.split(","))
 
-# Get Jellyfin config
-try:
-    JELLYFIN_SERVER_URL = config.get(BOT_SECTION, "jellyfin_server_url")
-    JELLYFIN_API_KEY = config.get(BOT_SECTION, "jellyfin_api_key")
-except:
-    print("Could not load Jellyfin config")
-    jellyfin_configured = False
-
-try:
-    JELLYFIN_EXTERNAL_URL = config.get(BOT_SECTION, "jellyfin_external_url")
-    if not JELLYFIN_EXTERNAL_URL:
-        JELLYFIN_EXTERNAL_URL = JELLYFIN_SERVER_URL
-except:
-    JELLYFIN_EXTERNAL_URL = JELLYFIN_SERVER_URL
-    print("Could not get Jellyfin external url. Defaulting to server url.")
-
-# Get Jellyfin roles config
-try:
-    jellyfin_roles = config.get(BOT_SECTION, "jellyfin_roles")
-except:
-    print("Could not get Jellyfin roles config")
-    jellyfin_roles = None
-if jellyfin_roles:
-    jellyfin_roles = list(jellyfin_roles.split(","))
-else:
-    jellyfin_roles = []
-
-# Get Jellyfin libs config
-try:
-    jellyfin_libs = config.get(BOT_SECTION, "jellyfin_libs")
-except:
-    print("Could not get Jellyfin libs config. Defaulting to all libraries.")
-    jellyfin_libs = None
-if jellyfin_libs is None:
-    jellyfin_libs = ["all"]
-else:
-    jellyfin_libs = list(jellyfin_libs.split(","))
-
 # Get Enable config
-try:
-    USE_JELLYFIN = config.get(BOT_SECTION, "jellyfin_enabled")
-    USE_JELLYFIN = USE_JELLYFIN.lower() == "true"
-except:
-    print("Could not get Jellyfin enable config. Defaulting to False")
-    USE_JELLYFIN = False
-
 try:
     USE_PLEX = config.get(BOT_SECTION, "plex_enabled")
     USE_PLEX = USE_PLEX.lower() == "true"
