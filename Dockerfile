@@ -2,7 +2,7 @@ FROM python:3.9.1-alpine
 
 # Github Owner 
 LABEL maintainer=cyb3rgh05t
-LABEL org.opencontainers.image.source https://github.com/cyb3rgh05t/plexadd
+LABEL org.opencontainers.image.source https://github.com/cyb3rgh05t/plexinviter-bot
 
 RUN \
     echo "http://dl-8.alpinelinux.org/alpine/edge/community" >> /etc/apk/repositories && \

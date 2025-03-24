@@ -1,20 +1,21 @@
 import sqlite3
 
-CURRENT_VERSION = 'Membarr V1.1'
+CURRENT_VERSION = "PlexInviter V1.0"
 
 table_history = {
-    'Invitarr V1.0': [
-        (0, 'id', 'INTEGER', 1, None, 1),
-        (1, 'discord_username', 'TEXT', 1, None, 0),
-        (2, 'email', 'TEXT', 1, None, 0)
+    "Invitarr V1.0": [
+        (0, "id", "INTEGER", 1, None, 1),
+        (1, "discord_username", "TEXT", 1, None, 0),
+        (2, "email", "TEXT", 1, None, 0),
     ],
-    'Membarr V1.1': [
-        (0, 'id', 'INTEGER', 1, None, 1),
-        (1, 'discord_username', 'TEXT', 1, None, 0),
-        (2, 'email', 'TEXT', 0, None, 0),
-        (3, 'jellyfin_username', 'TEXT', 0, None, 0)
-    ]
+    "PlexInviter V1.0": [
+        (0, "id", "INTEGER", 1, None, 1),
+        (1, "discord_username", "TEXT", 1, None, 0),
+        (2, "email", "TEXT", 0, None, 0),
+        (3, "jellyfin_username", "TEXT", 0, None, 0),
+    ],
 }
+
 
 def check_table_version(conn, tablename):
     dbcur = conn.cursor()
@@ -25,41 +26,48 @@ def check_table_version(conn, tablename):
             return app_version
     raise ValueError("Could not identify database table version.")
 
+
 def update_table(conn, tablename):
     version = check_table_version(conn, tablename)
-    print('------')
-    print(f'DB table version: {version}')
+    print("------")
+    print(f"DB table version: {version}")
     if version == CURRENT_VERSION:
-        print('DB table up to date!')
-        print('------')
+        print("DB table up to date!")
+        print("------")
         return
 
     # Table NOT up to date.
-    # Update to Membarr V1.1 table
-    if version == 'Invitarr V1.0':
-        print("Upgrading DB table from Invitarr v1.0 to Membarr V1.1")
+    # Update to PlexInviter V1.0 table
+    if version == "Invitarr V1.0":
+        print("Upgrading DB table from Invitarr v1.0 to PlexInviter V1.0")
         # Create temp table
         conn.execute(
-        '''CREATE TABLE "membarr_temp_upgrade_table" (
+            """CREATE TABLE "membarr_temp_upgrade_table" (
         "id"	INTEGER NOT NULL UNIQUE,
         "discord_username"	TEXT NOT NULL UNIQUE,
         "email"	TEXT,
         "jellyfin_username" TEXT,
         PRIMARY KEY("id" AUTOINCREMENT)
-        );''')
-        conn.execute(f'''
+        );"""
+        )
+        conn.execute(
+            f"""
         INSERT INTO membarr_temp_upgrade_table(id, discord_username, email)
         SELECT id, discord_username, email
         FROM {tablename};
-        ''')
-        conn.execute(f'''
+        """
+        )
+        conn.execute(
+            f"""
         DROP TABLE {tablename};
-        ''')
-        conn.execute(f'''
+        """
+        )
+        conn.execute(
+            f"""
         ALTER TABLE membarr_temp_upgrade_table RENAME TO {tablename}
-        ''')
+        """
+        )
         conn.commit()
-        version = 'Membarr V1.1'
+        version = "PlexInviter V1.0"
 
-    print('------')
-    
+    print("------")

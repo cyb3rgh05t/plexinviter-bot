@@ -1,6 +1,6 @@
-# PlexAdd
+# PlexInviter-bot
 
-PlexAdd is a fork of Invitarr that invites discord users to Plex and Jellyfin. You can also automate this bot to invite discord users to a media server once a certain role is given to a user or the user can also be added manually.
+PlexInviter is a fork of Invitarr that invites discord users to Plex and Jellyfin. You can also automate this bot to invite discord users to a media server once a certain role is given to a user or the user can also be added manually.
 
 ### Features
 
@@ -20,11 +20,11 @@ This command is used to remove an email from plex
 This command is used to add a user to Jellyfin.
 /jellyfin remove <jellyfin username>
 This command is used to remove a user from Jellyfin.
-/plexadd dbls
-This command is used to list PlexAdd's database
-/plexadd dbadd <@user> <optional: plex email> <optional: jellyfin username>
+/plex dbls
+This command is used to list PlexInviter's database
+/plex dbadd <@user> <optional: plex email> <optional: jellyfin username>
 This command is used to add exsisting  plex emails, jellyfin users and discord id to the DB.
-/plexadd dbrm <position>
+/plex dbrm <position>
 This command is used to remove a record from the Db. Use /plexadd dbls to determine record position. ex: /plexadd dbrm 1
 ```
 
@@ -71,10 +71,10 @@ python3 Run.py
 
 # Docker Setup & Start
 
-To run PlexAdd in Docker, run the following command, replacing [path to config] with the absolute path to your bot config folder:
+To run plexinviter-bot in Docker, run the following command, replacing [path to config] with the absolute path to your bot config folder:
 
 ```
-docker run -d --restart unless-stopped --name plexadd -v /[path to config]:/app/app/config -e "token=YOUR_DISCORD_TOKEN_HERE" yoruio/plexadd:latest
+docker run -d --restart unless-stopped --name plexinviter-bot -v /[path to config]:/app/app/config -e "token=YOUR_DISCORD_TOKEN_HERE" yoruio/plexinviter-bot:latest
 ```
 
 # After bot has started
@@ -117,11 +117,11 @@ This command disables the Jellyfin integration (currently only disables auto-add
 
 Invitarr does not require the applications.commands scope, so you will need to kick and reinvite your Discord bot to your server, making sure to tick both the "bot" and "applications.commands" scopes in the Oauth URL generator.
 
-PlexAdd uses a slightly different database table than Invitarr. PlexAdd will automatically update the Invitarr db table to the current PlexAdd table format, but the new table will no longer be compatible with Invitarr, so backup your app.db before running PlexAdd!
+plexinviter-bot uses a slightly different database table than Invitarr. plexinviter-bot will automatically update the Invitarr db table to the current plexinviter-bot table format, but the new table will no longer be compatible with Invitarr, so backup your app.db before running plexinviter-bot!
 
 # Migration to Invitarr
 
-As mentioned in [Migration from Invitarr](#Migration-From-Invitarr), PlexAdd has a slightly different db table than Invitarr. To Switch back to Invitarr, you will have to manually change the table format back. Open app.db in a sqlite cli tool or browser like DB Browser, then remove the "jellyfin_username" column, and make the "email" column non-nullable.
+As mentioned in [Migration from Invitarr](#Migration-From-Invitarr), plexinviter-bot has a slightly different db table than Invitarr. To Switch back to Invitarr, you will have to manually change the table format back. Open app.db in a sqlite cli tool or browser like DB Browser, then remove the "jellyfin_username" column, and make the "email" column non-nullable.
 
 # Contributing
 
