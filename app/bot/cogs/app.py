@@ -306,7 +306,7 @@ class app(commands.Cog):
         await self.removefromplex(email, interaction.response)
 
     @app_commands.checks.has_permissions(administrator=True)
-    @bot_commands.command(
+    @plexinviter_commands.command(
         name="dbadd", description="Add a user to the PlexInviter database"
     )
     async def dbadd(
@@ -338,7 +338,7 @@ class app(commands.Cog):
             print(e)
 
     @app_commands.checks.has_permissions(administrator=True)
-    @bot_commands.command(name="dbls", description="View PlexInviter database")
+    @plexinviter_commands.command(name="dbls", description="View PlexInviter database")
     async def dbls(self, interaction: discord.Interaction):
 
         embed = discord.Embed(title="PlexInviter Database.")
@@ -378,7 +378,7 @@ class app(commands.Cog):
             await interaction.response.send_message(embed=embed, ephemeral=True)
 
     @app_commands.checks.has_permissions(administrator=True)
-    @bot_commands.command(
+    @plexinviter_commands.command(
         name="dbrm", description="Remove user from PlexInviter database"
     )
     async def dbrm(self, interaction: discord.Interaction, position: int):
