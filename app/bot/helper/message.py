@@ -1,5 +1,5 @@
 from pickle import FALSE
-import app.bot.helper.jellyfinhelper as jelly
+# import app.bot.helper.jellyfinhelper as jelly
 from app.bot.helper.textformat import bcolors
 import discord
 from discord.ext import commands
@@ -19,7 +19,7 @@ CONFIG_PATH = 'app/config/config.ini'
 BOT_SECTION = 'bot_envs'
 
 plex_configured = True
-jellyfin_configured = True
+# jellyfin_configured = True
 
 config = configparser.ConfigParser()
 config.read(CONFIG_PATH)
