@@ -10,7 +10,7 @@ from plexapi.myplex import MyPlexAccount
 from plexapi.server import PlexServer
 import app.bot.helper.db as db
 import app.bot.helper.plexhelper as plexhelper
-import app.bot.helper.jellyfinhelper as jelly
+# import app.bot.helper.jellyfinhelper as jelly
 import texttable
 from app.bot.helper.message import *
 from app.bot.helper.confighelper import *
