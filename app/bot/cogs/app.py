@@ -98,7 +98,7 @@ class app(commands.Cog):
     plex_commands = app_commands.Group(
         name="plex", description="PlexInviter Plex commands"
     )
-    bot_commands = app_commands.Group(
+    plexinviter_commands = app_commands.Group(
         name="bot", description="PlexInviter general commands"
     )
 
